@@ -109,8 +109,11 @@ colorMode = int(colorsIn)
 fps = int(input("FPS of the final video: "))
 vidLength = int(input("Video length (in frames): "))
 # dpower = deltapower/vidLength
-randomSeed = random.randint(0,4800)
+randomIndex = random.randint(0,4800)
 
+if zoomDiff == True:
+    deltaZoom = zoom[1] - zoom[0]
+    dzoom = round(deltaZoom/vidLength, 2)
 
 checkpoints = [False, False, False, False, False, False, False, False, False]
 
@@ -122,15 +125,32 @@ print("\n[MandelbrotSetAnim.py]: Starting frames render")
 print("="*40)
 
 while frameCount < vidLength:
-
     # powerSpec = power[0] + dpower*frameCount
-
-    powerSpec = power[0] + (power[1] - power[0])*(frameCount/vidLength)
-    maxItSpec = maxIt[0] + (maxIt[1] - maxIt[0])*(frameCount/vidLength)
-    zoomSpec = zoom[0] + (zoom[1] - zoom[0])*(frameCount/vidLength)
-    offsetSpec = [offset[0][0] + (offset[1][0] - offset[0][0])*(frameCount/vidLength), offset[0][1] + (offset[1][1] - offset[0][1])*(frameCount/vidLength)]
-
     frameCount += 1
+
+    if powerDiff == True:
+        powerSpec = power[0] + (power[1] - power[0])*((frameCount - 1)/(vidLength - 1))
+    else:
+        powerSpec = power[0]
+
+    if maxItDiff == True:
+        maxItSpec = math.floor(maxIt[0] + (maxIt[1] - maxIt[0])*((frameCount - 1)/(vidLength - 1)))
+    else:
+        maxItSpec = maxIt[0]
+
+    if zoomDiff == True:
+        zoomSpec = zoom[0] + round((dzoom*(frameCount - 1))**2/deltaZoom, 2)
+        # zoomSpec = zoom[0] + round((dzoom*math.sqrt(frameCount - 1)), 2)
+    else:
+        zoomSpec = zoom[0]
+
+    if offsetDiff == True:
+        offsetSpec = [offset[0][0] + (offset[1][0] - offset[0][0])*((frameCount - 1)/(vidLength - 1)), offset[0][1] + (offset[1][1] - offset[0][1])*((frameCount - 1)/(vidLength - 1))]
+    else:
+        offsetSpec = offset[0]
+
+    print(f"vid{randomIndex}_frame{frameCount}: power = {powerSpec}, maxIt = {maxItSpec}, zoom = {zoomSpec}, offset = {offsetSpec}")    
+    print("-"*30)
 
     while k < res[1]:
         while i < res[0]:
@@ -174,8 +194,9 @@ while frameCount < vidLength:
             print(f"frame {frameCount}/{vidLength} - 90%")
             checkpoints[8] = True
 
-    img.save(f"out/frames/vid{randomSeed}_frame{frameCount}.png")
+    img.save(f"out/frames/vid{randomIndex}_frame{frameCount}.png")
     print(f"frame {frameCount}/{vidLength} - 100%")
+    print("-"*30)
     print("="*30)
     k = 0
     i = 0
@@ -184,20 +205,35 @@ while frameCount < vidLength:
 print("\n[MandelbrotSetAnim.py]: All frames rendered")
 
 vidTitle = "_"
-if maxItDiff == True:
-    vidTitle += f"(maxIt={maxIt})"
-if powerDiff == True:
-    vidTitle += f"(power={power})"
-if zoomDiff == True:
-    vidTitle += f"(zoom={zoom})"
-if offsetDiff == True:
-    vidTitle += f"(offset={offset})"
 
-finVid = cv2.VideoWriter("out/vid" + str(randomSeed) + vidTitle + ".mp4", cv2.VideoWriter_fourcc(*'XVID'), fps, res)
+vidTitle += f"res{res}FPS{fps}len{vidLength}"
+
+vidTitle += "_"
+
+
+if maxItDiff == True:
+    vidTitle += f"maxIt{maxIt}"
+else:
+    vidTitle += f"maxIt{maxIt[0]}"
+if powerDiff == True:
+    vidTitle += f"pow{power}"
+else:
+    vidTitle += f"pow{power[0]}"
+if zoomDiff == True:
+    vidTitle += f"zoom{zoom}"
+else:
+    vidTitle += f"zoom{zoom[0]}"
+if offsetDiff == True:
+    vidTitle += f"offs{offset}"
+else:
+    vidTitle += f"offs{offset[0]}"
+
+
+finVid = cv2.VideoWriter("out/vid" + str(randomIndex) + vidTitle + ".mp4", cv2.VideoWriter_fourcc(*'XVID'), fps, res)
 print("[MandelbrotSetAnim.py]: Compiling the video...")
 while i < vidLength:
     i += 1
-    frameIm = Image.open("out/frames/vid" + str(randomSeed) + "_frame" + str(i) + ".png")
+    frameIm = Image.open("out/frames/vid" + str(randomIndex) + "_frame" + str(i) + ".png")
     frame = numpy.asarray(frameIm)
     finVid.write(frame)
 
